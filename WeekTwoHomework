@@ -1,0 +1,40 @@
+public with sharing class WeekTwoHomework {
+    public static void getContactsList() {
+        //Query for a list of contacts and includes the account name, id and its Industry
+        List<Contact> acctContacts = [SELECT Id, AccountId, Account.Name, Account.Industry FROM Contact];
+        for(Contact c : acctContacts){
+            //If the contact has an account, print out the contact's account name and Industry
+            if(c.Account != null){
+                System.debug('Account Name: ' + c.Account.Name +', Industry : ' + c.Account.Industry);                
+			//If the contact does not have an associated account, go down this path.
+            } else {
+                System.debug('No associated account.');
+            }
+        }
+            System.Debug(acctContacts);
+    }
+    
+    public static void getAcctsWonOppts(){
+		//Query a list of accounts with stage 'Closed Won' opportunities
+        List<Account> acctsWonOppts = [SELECT Id, Name,(SELECT Id, Name, StageName FROM Opportunities WHERE StageName = 'Closed Won')
+        	FROM Account WHERE Id IN (SELECT AccountId FROM Opportunity WHERE StageName = 'Closed Won')
+		];
+		//Print out list of accounts with closed won opportunities.       
+        for(Account accts : acctsWonOppts){
+            if(accts.Opportunities != null){
+                System.debug('Account Name: ' + accts.Name);
+            //If there is no associated opportunity with a closed/won opportunity go down this path and basically do nothing.
+            } else {
+                System.debug('No won opportunities related to account.');
+            }
+        } 
+        System.debug(acctsWonOppts);
+        //Count number of opportunities that are closed won on an account and group by the account name
+		List<AggregateResult> sumOpptysWonByAccount = [SELECT AccountId, Name, count(Id) total FROM Opportunity WHERE StageName = 'Closed Won' GROUP BY AccountId, Name];
+        //Print out list of closed/won opptys by account and grouped by account name
+        for(AggregateResult ar : sumOpptysWonByAccount){
+            System.debug('aggregateAccount Name: ' + ar.get('AccountId'));
+            System.debug('aggregateTotal # of won opptys: ' + ar.get('total'));
+        }
+    }
+}
