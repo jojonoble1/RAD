@@ -30,11 +30,23 @@ public with sharing class WeekTwoHomework {
         } 
         System.debug(acctsWonOppts);
         //Count number of opportunities that are closed won on an account and group by the account name
-		List<AggregateResult> sumOpptysWonByAccount = [SELECT AccountId, Name, count(Id) total FROM Opportunity WHERE StageName = 'Closed Won' GROUP BY AccountId, Name];
+		List<AggregateResult> sumOpptysWonByAccount = [SELECT AccountId, COUNT(Id) total FROM Opportunity WHERE StageName = 'Closed Won' GROUP BY AccountId];
         //Print out list of closed/won opptys by account and grouped by account name
         for(AggregateResult ar : sumOpptysWonByAccount){
             System.debug('aggregateAccount Name: ' + ar.get('AccountId'));
             System.debug('aggregateTotal # of won opptys: ' + ar.get('total'));
         }
     }
+    public static void getMapAcctsWithWonOpptys(){
+       List<AggregateResult> sumOpptysWonByAcct = [SELECT AccountId, COUNT(Id) total FROM Opportunity WHERE StageName = 'Closed Won' GROUP BY AccountId];
+        
+        for (AggregateResult ar : sumOpptysWonByAcct){
+            Id acctId = (Id) ar.get('AccountId');
+            Long total = (Long) ar.get('total');
+            System.debug('Account ID: ' + acctId + ', Total Opptys: ' + total);
+        }
+       /*Map<Id, Account> acctMap = new Map<Id, Account>(
+           [SELECT Id, Name FROM Account WHERE Id IN : sumOpptysWonByAcct]
+        );*/
+    }              
 }
