@@ -37,16 +37,35 @@ public with sharing class WeekTwoHomework {
             System.debug('aggregateTotal # of won opptys: ' + ar.get('total'));
         }
     }
+    
     public static void getMapAcctsWithWonOpptys(){
-       List<AggregateResult> sumOpptysWonByAcct = [SELECT AccountId, COUNT(Id) total FROM Opportunity WHERE StageName = 'Closed Won' GROUP BY AccountId];
+        //This aggregate query counts all won opportunities grouped by Account Id.
+        //Note: Despite my attempts, I found that you cannot GROUP BY account.name directly in a SOQL query.
+        //Note: COUNT(Id) returns a whole number. The result of COUNT() in an AggregateResult is returned as a 'Long' not an integer.
+        List<AggregateResult> sumOpptysWonByAcct = [SELECT AccountId, COUNT(Id) total FROM Opportunity WHERE StageName = 'Closed Won' GROUP BY AccountId];
+   		
+        Set<Id> acctIds = new Set<Id>();
+        System.debug('Pull all account Ids: ' + acctIds);
         
         for (AggregateResult ar : sumOpptysWonByAcct){
             Id acctId = (Id) ar.get('AccountId');
-            Long total = (Long) ar.get('total');
-            System.debug('Account ID: ' + acctId + ', Total Opptys: ' + total);
+            acctIds.add(acctId);
+            System.debug('Account ID: ' + acctId);
         }
-       /*Map<Id, Account> acctMap = new Map<Id, Account>(
-           [SELECT Id, Name FROM Account WHERE Id IN : sumOpptysWonByAcct]
-        );*/
+        
+        Map<Id, Account> acctMap = new Map<Id, Account>(
+           [SELECT Id, Name FROM Account WHERE Id IN :acctIds]
+        );
+        
+        //Add account name that is correlated to its closed/won opportunity in the print log
+        //Important! Asked ChatGPT for support on what I was doing wrong with grabbing the string account name variable - line 63 and 66.
+        for(AggregateResult ar: sumOpptysWonByAcct){
+            Id acctId = (Id)ar.get('AccountId');
+            //The 'Long' type is being used to caputre the count of opptys returned by the aggregate query.
+            //To safely handle large counts, you must cast the value to 'Long' similar to what is on line 66
+            Long total = (Long)ar.get('total');
+            String acctName = acctMap.containsKey(acctId) ? acctMap.get(acctId).Name : 'Uknown';
+        	System.debug('Account ID: ' + acctId + ', Account Name: ' + acctName + ', Total OPpty: ' + total);
+        }
     }              
 }
